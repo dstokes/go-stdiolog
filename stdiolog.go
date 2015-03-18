@@ -14,7 +14,7 @@ import (
 // flags
 var (
 	outfile = flag.String("o", "", "logfile for stdout")
-	errfile = flag.String("3", "", "logfile for stderr")
+	errfile = flag.String("e", "", "logfile for stderr")
 )
 
 // hooks for testing
