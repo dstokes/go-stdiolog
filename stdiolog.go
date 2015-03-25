@@ -8,19 +8,18 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 )
 
-// flags
 var (
+	// flags
 	outfile = flag.String("o", "", "logfile for stdout")
 	errfile = flag.String("e", "", "logfile for stderr")
-)
 
-// hooks for testing
-var (
-	outlog io.Writer
-	errlog io.Writer
+	outlog io.WriteCloser
+	errlog io.WriteCloser
+	wg     sync.WaitGroup
 )
 
 func main() {
@@ -37,27 +36,45 @@ func main() {
 	if *errfile == "" {
 		errlog = outlog
 	} else {
-		errlog, err := os.OpenFile(*errfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		errlog, err = os.OpenFile(*errfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer errlog.Close()
 	}
 
+	// setup child process
 	cmd := exec.Command(args[0], args[1:]...)
 	cmdout, _ := cmd.StdoutPipe()
 	cmderr, _ := cmd.StderrPipe()
 
-	go r(cmdout, &Logger{os.Stdout, outlog})
-	go r(cmderr, &Logger{os.Stderr, errlog})
+	// check for incoming data on stdin
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		wg.Add(1)
+		stdin, _ := cmd.StdinPipe()
+		go func() {
+			// copy stdin to child process then close stdin
+			if _, err := io.Copy(stdin, os.Stdin); err == nil {
+				stdin.Close()
+				wg.Done()
+			} else {
+				panic(err)
+			}
+		}()
+	}
+
+	wg.Add(2)
+	go ReadWriteLine(cmdout, &Logger{os.Stdout, outlog})
+	go ReadWriteLine(cmderr, &Logger{os.Stderr, errlog})
 
 	cmd.Start()
-	cmd.Wait()
+	wg.Wait()
 }
 
 type Logger struct {
-	Stdio   io.Writer
-	Logfile io.Writer
+	Stdio   io.WriteCloser
+	Logfile io.WriteCloser
 }
 
 func (l *Logger) Write(p []byte) (n int, err error) {
@@ -67,15 +84,23 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 	return fmt.Fprintf(l.Stdio, "%s", p)
 }
 
-func r(reader io.Reader, logger *Logger) {
+func (l *Logger) Close() error {
+	return l.Logfile.Close()
+}
+
+func ReadWriteLine(reader io.ReadCloser, writer io.WriteCloser) {
 	s := bufio.NewReader(reader)
 	for {
 		if l, _, err := s.ReadLine(); err == io.EOF {
+			if len(l) > 0 {
+				writer.Write(l)
+			}
 			break
 		} else if err != nil {
 			panic(err)
 		} else {
-			logger.Write(append(l, 0x0A))
+			writer.Write(append(l, 0x0A))
 		}
 	}
+	wg.Done()
 }

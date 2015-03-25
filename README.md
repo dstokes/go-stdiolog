@@ -6,8 +6,16 @@ Passively log the stdio for a process.
 usage
 =====
 
+Write stdio of child proccess to log files while preserving terminal stdio.
+
 ```shell
 $ go-stdiolog -o stdout.log -e stderr.log -- foo -a bar
+```
+
+Pass stdin to child proccess.
+
+```shell
+$ echo ohai | go-stdiolog -o stdout.log -- cat
 ```
 
 install
