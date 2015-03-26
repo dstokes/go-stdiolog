@@ -133,7 +133,7 @@ func (l *Logger) Close() error {
 	return l.Logfile.Close()
 }
 
-func ReadWriteLine(reader io.ReadCloser, writer io.Writer) {
+func ReadWriteLine(reader io.Reader, writer io.Writer) {
 	s := bufio.NewReader(reader)
 	for {
 		if l, _, err := s.ReadLine(); err == io.EOF {
