@@ -8,9 +8,14 @@ XC_ARCH ?= 386 amd64
 GOBIN := $(GOPATH)/bin
 DEBFILE := stdiolog_$(VERSION)-0_$(GOARCH).deb
 
-all: build
+deps:
+	go get -d -t ./...
 
-build: $(BUILDS)
+test: deps
+	go test ./...
+
+install: deps
+	go install
 
 deb: fpm $(DEBFILE)
 
@@ -36,4 +41,4 @@ release:
 clean:
 	@rm -rf dist/
 
-.PHONY: fpm clean release version
+.PHONY: fpm clean deps release test version

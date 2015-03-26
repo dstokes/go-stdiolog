@@ -3,6 +3,8 @@ go-stdiolog
 
 Passively log the stdio for a process.
 
+[![Build Status](https://travis-ci.org/dstokes/go-stdiolog.png)](https://travis-ci.org/dstokes/go-stdiolog)
+
 usage
 =====
 
