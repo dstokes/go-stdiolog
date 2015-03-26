@@ -8,6 +8,8 @@ XC_ARCH ?= 386 amd64
 GOBIN := $(GOPATH)/bin
 DEBFILE := stdiolog_$(VERSION)-0_$(GOARCH).deb
 
+all: test
+
 deps:
 	go get -d -t ./...
 
