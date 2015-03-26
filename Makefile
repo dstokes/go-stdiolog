@@ -1,6 +1,6 @@
 GOOS ?= linux
 GOARCH ?= amd64
-VERSION ?= 0.0.1
+VERSION ?= $(shell awk '/Version/ {gsub("\"", "", $$4); print $$4}' version.go)
 
 XC_OS ?= darwin linux
 XC_ARCH ?= 386 amd64
@@ -31,9 +31,9 @@ release:
 		zip ../$$(basename $$platform).zip ./* >/dev/null; \
 		popd >/dev/null; \
 	done
-	@ghr -u dstokes v$(VERSION) dist/
+	@ghr -u dstokes $(VERSION) dist/
 
 clean:
 	@rm -rf dist/
 
-.PHONY: fpm clean release
+.PHONY: fpm clean release version
