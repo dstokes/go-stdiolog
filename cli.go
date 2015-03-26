@@ -32,7 +32,8 @@ var (
 )
 
 type CLI struct {
-	Stdin          *os.File
+	Piped          bool
+	Stdin          io.Reader
 	Stdout, Stderr io.Writer
 }
 
@@ -66,12 +67,14 @@ func (cli *CLI) Run(args []string) int {
 	childArgs := flags.Args()
 
 	// open output files
-	outlog, err = os.OpenFile(*outfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Fprintf(cli.Stderr, err.Error())
-		return ExitCodeFileOpenError
+	if outlog == nil {
+		outlog, err = os.OpenFile(*outfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Fprintf(cli.Stderr, err.Error())
+			return ExitCodeFileOpenError
+		}
+		defer outlog.Close()
 	}
-	defer outlog.Close()
 
 	if *errfile == "" {
 		errlog = outlog
@@ -90,8 +93,7 @@ func (cli *CLI) Run(args []string) int {
 	cmderr, _ := cmd.StderrPipe()
 
 	// check for incoming data on stdin
-	stat, _ := cli.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
+	if cli.Piped {
 		wg.Add(1)
 		stdin, _ := cmd.StdinPipe()
 		go func() {
