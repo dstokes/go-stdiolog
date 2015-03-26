@@ -3,6 +3,7 @@ go-stdiolog
 
 Passively log the stdio for a process.
 
+[![GitHub Release](http://img.shields.io/github/release/dstokes/go-stdiolog.svg)](https://github.com/dstokes/go-stdiolog/releases)
 [![Build Status](https://travis-ci.org/dstokes/go-stdiolog.png)](https://travis-ci.org/dstokes/go-stdiolog)
 
 usage
