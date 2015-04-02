@@ -38,7 +38,7 @@ release:
 		zip ../$$(basename $$platform).zip ./* >/dev/null; \
 		popd >/dev/null; \
 	done
-	@ghr -u dstokes $(VERSION) dist/
+	@ghr $(VERSION) dist/
 
 clean:
 	@rm -rf dist/
